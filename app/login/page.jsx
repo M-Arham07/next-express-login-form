@@ -13,10 +13,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 //INPUT VALIDATOR:
-import {ValidateSignin_Input} from '@/lib/InputValidator'
+import { ValidateLogin_Input } from "../../lib/InputValidator";
+
+
+
 
 
 
@@ -47,10 +50,61 @@ export default function LoginForm() {
 
   const [CurrentEyeOpen, setCurrentEyeOpen] = useState(true);
 
+  // FORM INPUT READING
+  const [currentPass, setPass] = useState('');
+  const [currentEmail, setEmail] = useState('');
+  const [ErrData,setErrData]=useState({errclass:'hidden', errmsg:''});
+
+
+
   function HandeShowHidePassword() {
     CurrentEyeOpen ? setCurrentEyeOpen(false) : setCurrentEyeOpen(true);
 
   }
+
+
+
+  function handleLogin(SubmitEvent) {
+    SubmitEvent.preventDefault() //prevents default behaviour of forms (reloading)
+
+    // console.log(currentEmail)
+    // console.log(currentPass)
+
+     //INPUT VALIDATING
+
+    const validation = ValidateLogin_Input(currentEmail, currentPass)
+    //the return value of this function is stored in validated,  Code: console.log(validated)
+    
+    if(validation.status === false){
+      setErrData({errclass:'' , errmsg: validation.msg});
+
+      // REMOVE THE ERR MESSAGE AFTER 2 Seconds:
+       setTimeout(()=>{
+        setErrData({errclass:'hidden', errmsg:''})
+      },2000)
+      return; //Stop further execution
+      
+    }
+
+    if(validation.status === true){
+      setErrData({errclass:'hidden', errmsg:''});
+    }
+
+  }
+
+
+//DEBUGGING:
+// useEffect(()=>{
+//  console.log(ErrData)
+// },[ErrData])
+ 
+
+
+  
+
+
+
+
 
 
 
@@ -69,12 +123,12 @@ export default function LoginForm() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <form id='login-form'>
+          <form id='login-form' onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
 
               {/* Error message*/}
-              <div className="mb-2 hidden">
-                <span className="block text-red-500 text-sm font-medium">INSERT ERROR</span>
+              <div className={`mb-2 ${ErrData.errclass}`}>
+                <span className="block text-red-500 text-sm font-medium">{ErrData.errmsg}</span>
               </div>
               {/* Error message ENDS*/}
 
@@ -84,7 +138,7 @@ export default function LoginForm() {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
-                  required
+                  required onChange={(e) => { setEmail(e.target.value) }}
                 />
               </div>
               <div className="grid gap-2">
@@ -100,7 +154,9 @@ export default function LoginForm() {
                 <div className="relative flex items-center">
                   <Input id="password"
                     type={CurrentEyeOpen ? 'password' : 'text'}
-                    placeholder='Password' required className="pr-8" />
+                    placeholder='Password' required className="pr-8"
+                    onChange={(e) => { setPass(e.target.value) }}
+                  />
                   <button
                     type="button"
                     tabIndex={-1}
@@ -117,7 +173,7 @@ export default function LoginForm() {
         </CardContent>
         <CardFooter className="flex-col gap-2">
           <Button type="submit" className="w-full" form='login-form'>  {/* form =login-form IS USED TO LINK the button to the form, as the button is outside the form tag */}
-            
+
             Login
           </Button>
         </CardFooter>
