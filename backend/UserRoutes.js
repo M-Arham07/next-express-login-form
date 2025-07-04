@@ -76,7 +76,9 @@ function SIGN_UP() {
         })
 
 }
-SIGN_UP(); // UNCOMMENT TO RUN!
+
+
+SIGN_UP(); 
 
 
 function LOG_IN() {
@@ -126,8 +128,6 @@ function LOG_IN() {
 
 
 }
-
-
 
 
 LOG_IN();
