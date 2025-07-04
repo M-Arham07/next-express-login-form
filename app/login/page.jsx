@@ -62,6 +62,17 @@ export default function LoginForm() {
 
   }
 
+  
+  useEffect(() => {
+    /* removes the error message after 2 seconds, 
+   if the signup/signup is pressed before 2 seconds again, react cleanups by executing the return function,
+   which clears the timeout, as a result every time signin/signup is pressed , its timer resets to 2seconds */
+    const $ERR_TIMEOUT = setTimeout(() => {
+      setErrData({ errclass: 'hidden', errmsg: '' })
+    }, 2000)
+    return () => clearTimeout($ERR_TIMEOUT)
+  }, [ErrData])
+
 
 
   function handleLogin(SubmitEvent) {
@@ -69,20 +80,16 @@ export default function LoginForm() {
 
     // console.log(currentEmail)
     // console.log(currentPass)
-
      //INPUT VALIDATING
+
 
     const validation = ValidateLogin_Input(currentEmail, currentPass)
     //the return value of this function is stored in validated,  Code: console.log(validated)
     
     if(validation.status === false){
       setErrData({errclass:'' , errmsg: validation.msg});
-
-      // REMOVE THE ERR MESSAGE AFTER 2 Seconds:
-       setTimeout(()=>{
-        setErrData({errclass:'hidden', errmsg:''})
-      },2000)
-      return; //Stop further execution
+      
+      return;
       
     }
 
@@ -116,7 +123,7 @@ export default function LoginForm() {
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your credentials below to login to your account
           </CardDescription>
           <CardAction>
             <Button variant="link"><Link href='/signup'> Sign Up </Link></Button>

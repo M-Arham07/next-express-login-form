@@ -13,10 +13,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 //INPUT VALIDATOR:
-import {ValidateSignUP_Input} from '@/lib/InputValidator'
+import { ValidateSignUP_Input } from '@/lib/InputValidator'
+
 
 
 
@@ -58,6 +59,10 @@ export default function SignupForm() {
 
 
 
+
+
+
+
   const [CurrentEyeOpen, setCurrentEyeOpen] = useState(true);
 
   function HandeShowHidePassword() {
@@ -65,10 +70,73 @@ export default function SignupForm() {
 
   }
 
+  const [currentEmail, setEmail] = useState('');
+  const [currentPass, setPass] = useState('');
+  const [confirmedPass, setConfirmedPass] = useState('');
+  const [ErrData, setErrData] = useState({ errclass: 'hidden', errmsg: '' });
+
+
+  useEffect(() => {
+    /* removes the error message after 2 seconds, 
+   if the signup/signup is pressed before 2 seconds again, react cleanups by executing the return function,
+   which clears the timeout, as a result every time signin/signup is pressed , its timer resets to 2seconds */
+    const $ERR_TIMEOUT = setTimeout(() => {
+      setErrData({ errclass: 'hidden', errmsg: '' })
+    }, 2000)
+    return () => clearTimeout($ERR_TIMEOUT)
+  }, [ErrData])
+
+  function handleSignup(SubmitEvent) {
+    SubmitEvent.preventDefault();
+
+    const validation = ValidateSignUP_Input(currentEmail, currentPass, confirmedPass);
 
 
 
- 
+    if (validation.status === false) {
+      setErrData({ errclass: '', errmsg: validation.msg })
+      //REMOVE ERROR MESSAGE AFTER 2 SECONDS!
+
+      return; //exit
+    }
+
+
+    if (validation.status === true) {
+      setErrData({ errclass: 'hidden', errmsg: '' })
+
+
+      // TO BE CONTINUED AFTER BACKEND BUILT!
+
+    }
+
+
+
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+  // FOR DEBUGGING:
+  //  useEffect(()=>{
+  //   console.log(`
+  //     ${currentEmail}
+  //     ${currentPass}
+  //     ${confirmedPass}
+  //     `)
+  // },[currentEmail,currentPass,confirmedPass])
+
+
+
+
+
 
 
 
@@ -93,11 +161,11 @@ export default function SignupForm() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <form id="signup-form">
+          <form id="signup-form" onSubmit={handleSignup}>
             <div className="flex flex-col gap-6">
               {/* Error message  */}
-              <div className="mb-2 hidden">
-                <span className="block text-red-500 text-sm font-medium">Email already in use. Please try another.</span>
+              <div className={`mb-2 ${ErrData.errclass}`}>
+                <span className="block text-red-500 text-sm font-medium">{ErrData.errmsg}</span>
               </div>
               {/* Error message ENDS */}
 
@@ -107,7 +175,7 @@ export default function SignupForm() {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
-                  required
+                  required onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -115,7 +183,7 @@ export default function SignupForm() {
                 <div className="relative flex items-center">
                   <Input id="password" minLength='8'
                     type={CurrentEyeOpen ? 'password' : 'text'}
-                    required className="pr-8"/>
+                    required className="pr-8" onChange={(e) => setPass(e.target.value)} />
                   <button
                     type="button"
                     tabIndex={-1}
@@ -131,7 +199,7 @@ export default function SignupForm() {
                 <div className="relative flex items-center">
                   <Input id="confirm-password" minLength='8'
                     type={CurrentEyeOpen ? 'password' : 'text'}
-                    required className="pr-8" />
+                    required className="pr-8" onChange={(e) => setConfirmedPass(e.target.value)} />
                   <button
                     type="button"
                     tabIndex={-1}
