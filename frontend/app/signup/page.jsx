@@ -16,7 +16,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 
 //INPUT VALIDATOR:
-import { ValidateSignUP_Input } from '@/lib/InputValidator'
+import { ValidateSignUP_Input } from '../../../InputValidator'
 
 
 

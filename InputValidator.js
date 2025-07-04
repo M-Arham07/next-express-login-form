@@ -70,10 +70,10 @@ export function ValidateLogin_Input(email, password) {
 
 
 
-    if (new_password === '' || new_password === null || new_password === undefined || typeof new_password !== 'string') {
+    if (new_password.length<8 || new_password === '' || new_password === null || new_password === undefined || typeof new_password !== 'string' ) {
         /* I created checks for every possibility, also to allow ONLY strings
          , as someone might enter a number */
-          const errMsg={msg:"Enter a valid  Password!" , status:false}
+          const errMsg={msg:"Enter a valid  Password (Atleast 8 Characters)" , status:false}
         return errMsg;
     }
 
