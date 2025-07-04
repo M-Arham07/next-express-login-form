@@ -46,9 +46,10 @@ app.use((req,res,next)=>{
 
 });
 
+
 app.use((err,req,res,next)=>{
-    const $ERR_CODE=err.statusCode || 500
-    res.status($ERR_CODE).send(err.message)
+    const $ERR_CODE=err.statusCode || 500; // if theres no status code, assign it 500 (Internal Server Error)
+    res.status($ERR_CODE).send($ERR_CODE,err.message);
 })
 
 
