@@ -24,7 +24,7 @@ export function ValidateLogin_Input(email, password) {
      * if one thing is not given good it will always give an error AND then exit the program"      
      * ****/
 
-    if (!EmailRegex.test(email)) {   // if email is NOT a valid email , do this:
+    if (!EmailRegex.test(email) || typeof email !== "string") {   // if email is NOT a valid email , do this:
         const errMsg={msg:"Enter a valid Email!" ,status:false}
         return errMsg;
     }
@@ -61,12 +61,10 @@ export function ValidateLogin_Input(email, password) {
     const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 
-    if (!EmailRegex.test(new_email)) {   // if email is NOT a valid email , do this:
+    if (!EmailRegex.test(new_email) || typeof new_email !== "string" || new_email.length > 60) {   // if email is NOT a valid email , do this:
         const errMsg={msg:"Enter a valid Email!" , status:false}
         return errMsg;
     }
-
-
 
 
 
