@@ -83,7 +83,7 @@ function SIGN_UP() {
 
                 catch (err) {
                         
-                        console.error(err);
+                        console.error(err.message);
                         return res.status(500).json({ msg: 'Error adding User!', status: false });
 
                 }
@@ -146,7 +146,7 @@ function LOG_IN() {
 
                 catch (err) {
                         // IF STILL SOMETHING GOES WRONG RETURN INTERNAL SERVER ERROR HTTP CODE (500) :
-                        console.error(err)
+                        console.error(err.message)
                         return res.status(500).json({ msg: "Login Failed.Please try again!", status: false })
 
                 }
