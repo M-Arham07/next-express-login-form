@@ -16,7 +16,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 
 //INPUT VALIDATOR:
-import {ValidateLogin_Input} from '@/lib/InputValidator';
+import { ValidateLogin_Input } from '@/lib/InputValidator';
 
 
 
@@ -49,7 +49,7 @@ export default function LoginForm() {
   // FORM INPUT READING
   const [currentPass, setPass] = useState('');
   const [currentEmail, setEmail] = useState('');
-  const [ErrData,setErrData]=useState({errclass:'hidden', errmsg:''});
+  const [ErrData, setErrData] = useState({ errclass: 'hidden', errmsg: '' });
 
 
 
@@ -58,7 +58,7 @@ export default function LoginForm() {
 
   }
 
-  
+
   useEffect(() => {
     /* removes the error message after 2 seconds, 
    if the signup/signup is pressed before 2 seconds again, react cleanups by executing the return function,
@@ -76,34 +76,69 @@ export default function LoginForm() {
 
     // console.log(currentEmail)
     // console.log(currentPass)
-     //INPUT VALIDATING
+    //INPUT VALIDATING
 
 
     const validation = ValidateLogin_Input(currentEmail, currentPass)
     //the return value of this function is stored in validated,  Code: console.log(validated)
-    
-    if(validation.status === false){
-      setErrData({errclass:'' , errmsg: validation.msg});
-      
+
+    if (validation.status === false) {
+      setErrData({ errclass: '', errmsg: validation.msg });
+
       return;
-      
+
     }
 
-    if(validation.status === true){
-      setErrData({errclass:'hidden', errmsg:''});
+    if (validation.status === true) {
+      setErrData({ errclass: 'hidden', errmsg: '' });
+
+      // NOW THE BACKEND PART BEGINS, API POST REQUEST WILL BE SENT TO BACKEND
+
+      async function LOGIN_USER() {
+        try {
+          const res = await fetch('http://localhost:4000/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: currentEmail,
+              password: currentPass
+            })
+          });
+          const info = await res.json();
+          // console.log(info)
+
+          info.status ? setErrData({ errclass: '!text-green-500', errmsg: info.msg })
+            : setErrData({ errclass: '', errmsg: info.msg })
+
+        }
+        catch (err) {
+
+          console.log(`Failed Connecting to server. Logs: ${err.message}`);
+          // also send some error to user
+          setErrData({ errclass: '', errmsg: 'Server down. Please try again later.' })
+
+
+        }
+
+      }
+
+      LOGIN_USER();
+
+
+
     }
 
   }
 
 
-//DEBUGGING:
-// useEffect(()=>{
-//  console.log(ErrData)
-// },[ErrData])
- 
+  //DEBUGGING:
+  // useEffect(()=>{
+  //  console.log(ErrData)
+  // },[ErrData])
 
 
-  
+
+
 
 
 
@@ -131,7 +166,7 @@ export default function LoginForm() {
 
               {/* Error message*/}
               <div className={`mb-2 ${ErrData.errclass}`}>
-                <span className="block text-red-500 text-sm font-medium">{ErrData.errmsg}</span>
+                <span className={`block text-red-500 ${ErrData.errclass} text-sm font-medium`}>{ErrData.errmsg}</span>
               </div>
               {/* Error message ENDS*/}
 

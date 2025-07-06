@@ -19,7 +19,7 @@ const bcrypt = require('bcrypt');
 function SIGN_UP() {
 
         router.post('/sign-up', async (req, res) => {
-                console.log(req.body) // debugging only!
+                // console.log(req.body) // FOR debugging only!
                 try {   
                         let { email, password, confirmed_password } = req.body; // now email, password and confimed_password are separate variables by object destructring
                 

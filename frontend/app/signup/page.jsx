@@ -126,7 +126,8 @@ export default function SignupForm() {
 
         // if info.status is true, show success message in green, otherwise show error message
         
-        
+        // I DONT WANT TO MAKE IT MORE COMPLEX, SO I USED errData usestate to also show Success messages
+        // !text-green-500 will make the msg green and important (force applies css class)
         info.status ? setErrData({errclass:'!text-green-500', errmsg:info.msg})
         : setErrData({errclass:'',errmsg: info.msg })
 
