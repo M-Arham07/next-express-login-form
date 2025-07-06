@@ -1,7 +1,7 @@
-
+// INPUT VALIDATOR FOR FRONTEND (MADE BY M-Arham07)
 
 export function ValidateLogin_Input(email, password) {
-
+ 
     
 
 

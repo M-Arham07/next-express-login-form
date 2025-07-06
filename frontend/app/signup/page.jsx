@@ -16,7 +16,9 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 
 //INPUT VALIDATOR:
-import { ValidateSignUP_Input } from '../../../InputValidator'
+import {ValidateSignUP_Input} from '@/lib/InputValidator';
+
+
 
 
 
@@ -102,12 +104,55 @@ export default function SignupForm() {
 
 
     if (validation.status === true) {
-      setErrData({ errclass: 'hidden', errmsg: '' })
+      setErrData({ errclass: 'hidden', errmsg: '' });
+
+      // NOW THE BACKEND PART BEGINS, API POST REQUEST WILL BE SENT TO BACKEND
+
+      async function SIGN_UP_USER() {
+        try{
+        const res= await fetch('http://localhost:4000/api/sign-up', {
+          'method':'POST',
+          headers:{'Content-type': 'application/json' } ,
+          body: JSON.stringify({
+            email: currentEmail,
+            password: currentPass,
+            confirmed_password: confirmedPass
+          })
+        });
+        const info=await res.json();
+        // console.log(info)
+
+        //info is a object that contains msg and status properties sent in json format from the backend!
+
+        // if info.status is true, show success message in green, otherwise show error message
+        
+        
+        info.status ? setErrData({errclass:'!text-green-500', errmsg:info.msg})
+        : setErrData({errclass:'',errmsg: info.msg })
 
 
-      // TO BE CONTINUED AFTER BACKEND BUILT!
+      }
+      catch(err){
+        console.log(`Failed Connecting to server. Logs: ${err.message}`);
+        // also send some error to user
+        setErrData({errclass:'', errmsg: 'Server down. Please try again later.' })
+      }
+
+        
+      }
+
+      
+
+      SIGN_UP_USER();
+
+      
 
     }
+
+
+
+
+    
 
 
 
@@ -165,10 +210,11 @@ export default function SignupForm() {
             <div className="flex flex-col gap-6">
               {/* Error message  */}
               <div className={`mb-2 ${ErrData.errclass}`}>
-                <span className="block text-red-500 text-sm font-medium">{ErrData.errmsg}</span>
+                <span className={`block text-red-500 ${ErrData.errclass} text-sm font-medium`}>{ErrData.errmsg}</span>
               </div>
               {/* Error message ENDS */}
-
+              
+ 
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

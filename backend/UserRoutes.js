@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 
 const User = require('./UserModel');
-const { ValidateLogin_Input, ValidateSignUP_Input } = require('../InputValidator');
+const { ValidateLogin_Input, ValidateSignUP_Input } = require('./utilities/InputValidatorBACKEND');
 const bcrypt = require('bcrypt');
 
 // LISTING ALL USERS:
@@ -19,6 +19,7 @@ const bcrypt = require('bcrypt');
 function SIGN_UP() {
 
         router.post('/sign-up', async (req, res) => {
+                console.log(req.body) // debugging only!
                 try {   
                         let { email, password, confirmed_password } = req.body; // now email, password and confimed_password are separate variables by object destructring
                 

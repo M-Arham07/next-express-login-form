@@ -1,21 +1,38 @@
 
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const mongoSanitize=require('express-mongo-sanitize'); // USED TO SANITIZE NoSQL queries to avoid injections
 dotenv.config(); //allows to use process.env.variable_name
 
+const {xss}=require('express-xss-sanitizer'); /* xss is a middleware that finds any bad scripts or malicious code (of HTML)
+in user input like <script> badCode </script> and removes it before it reaches your db through backend */
+
+const helmet=require('helmet'); /* it sets special http headers that block XSS attacks, its like an extra security layer
+ in simple words it is used to block XSS attacks in the browser level. It says to browser that DO NOT EXECUTE SCRIPTS COMING FROM BACKEND!
+ it tells browser to not execute malicious code even if it SOMEHOW slips through */
+
+
+
+
 
 
 
 const app = express();
+
 mongoose.Promise=global.Promise;
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+app.use(express.urlencoded({ extended: true })); 
+// no need for body parser in ew version of express!
+app.use(express.json());
+
+app.use(xss());
+app.use(helmet());
+
+
 
 
 
@@ -39,6 +56,9 @@ async function ConnectDB() {
 ConnectDB();
 
 
+
+
+
 app.use((req,res,next)=>{ 
 
 /* THIS MIDDLEWARE WILL FIRST SANITIZE req.body, remove $ . 
@@ -49,8 +69,14 @@ app.use((req,res,next)=>{
 
  req.body = mongoSanitize.sanitize(req.body); 
 
- next();
+ next(); // passes control to next middleware after sanitizing
 });
+
+
+
+
+
+
 
 
 // IMPORTING ROUTES AND USING THEM:
