@@ -8,11 +8,17 @@ const User = require('./UserModel');
 const { ValidateLogin_Input, ValidateSignUP_Input } = require('./utilities/InputValidatorBACKEND');
 const bcrypt = require('bcrypt');
 
+// Welcome Email sender after user logs in!
+const {SEND_WELCOME_EMAIL}=require('./utilities/EMAIL_SYSTEM')
+
 // LISTING ALL USERS:
 // router.get('/', async (req,res)=>{ 
 //  const data= await User.find({})
 //  res.json(data);
 // });
+
+
+
 
 
 //SIGN_UP ROUTE
@@ -56,6 +62,8 @@ function SIGN_UP() {
                                          * if its null, it means request failed, but i dont know why it failed because
                                          * all checks are verified, so i sent an internal server error in the CATCH BLOCK */
                                         if(isInserted){
+                                                // SEND A WELCOME EMAIL:
+                                                SEND_WELCOME_EMAIL(email)
                                          return res.status(200).json({ msg: 'User added Successfully!', status: true });
                                         }
                                         
