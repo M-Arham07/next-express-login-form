@@ -101,7 +101,19 @@ function ValidateSignUP_Input(new_email, new_password,confirmed_password){
 }
 
 
-module.exports={ValidateLogin_Input,ValidateSignUP_Input};
+function CHECK_VALID_EMAIL(email){
+    const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    
+    if (!EmailRegex.test(email) || typeof email !== "string") {   // if email is NOT a valid email , do this:
+        return false;
+    }
+    return true;
+
+}
+
+
+module.exports={ValidateLogin_Input,ValidateSignUP_Input,CHECK_VALID_EMAIL};
 
 
 // console.log(ValidateSignUP_Input('a@example.com','pass', 'pass'))

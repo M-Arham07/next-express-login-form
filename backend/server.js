@@ -33,10 +33,6 @@ app.use(xss());
 app.use(helmet());
 
 
-
-
-
-
 // CONNECTING TO MONGODB DATABASE
 
 async function ConnectDB() {
@@ -53,7 +49,7 @@ async function ConnectDB() {
 
 }
 
-ConnectDB();
+ConnectDB(); // ideally we should use .then(), as ASYNC function always return promises
 
 
 
@@ -65,7 +61,7 @@ app.use((req,res,next)=>{
  * and other prohibited characters that might cause an issue!
  * and only then it will pass control to next middleware! */
 
-//  req.params = mongoSanitize.sanitize(req.params)
+ req.params = mongoSanitize.sanitize(req.params) // for put request!
 
  req.body = mongoSanitize.sanitize(req.body); 
 

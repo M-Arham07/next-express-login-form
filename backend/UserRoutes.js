@@ -5,11 +5,11 @@ const express = require('express');
 const router = express.Router();
 
 const User = require('./UserModel');
-const { ValidateLogin_Input, ValidateSignUP_Input } = require('./utilities/InputValidatorBACKEND');
+const { ValidateLogin_Input, ValidateSignUP_Input, CHECK_VALID_EMAIL } = require('./utilities/InputValidatorBACKEND');
 const bcrypt = require('bcrypt');
 
-// Welcome Email sender after user logs in!
-const {SEND_WELCOME_EMAIL}=require('./utilities/EMAIL_SYSTEM')
+// Welcome Email sender after user logs in and OTP SENDER!
+const { SEND_WELCOME_EMAIL, SEND_OTP, COMPARE_OTP } = require('./utilities/EMAIL_SYSTEM')
 
 // LISTING ALL USERS:
 // router.get('/', async (req,res)=>{ 
@@ -26,9 +26,9 @@ function SIGN_UP() {
 
         router.post('/sign-up', async (req, res) => {
                 // console.log(req.body) // FOR debugging only!
-                try {   
+                try {
                         let { email, password, confirmed_password } = req.body; // now email, password and confimed_password are separate variables by object destructring
-                
+
                         email = email.trim().toLowerCase();
                         // Email addresses NOT CASE SENSITIVE, means ABC@example.com is same as abc@example.com
                         // trim removes white spaces like " abc@example.com    " to "abc@example.com"
@@ -61,12 +61,12 @@ function SIGN_UP() {
                                         /* if isInserted is true (not null), it means user has been inserted 
                                          * if its null, it means request failed, but i dont know why it failed because
                                          * all checks are verified, so i sent an internal server error in the CATCH BLOCK */
-                                        if(isInserted){
+                                        if (isInserted) {
                                                 // SEND A WELCOME EMAIL:
                                                 SEND_WELCOME_EMAIL(email)
-                                         return res.status(200).json({ msg: 'User added Successfully!', status: true });
+                                                return res.status(200).json({ msg: 'User added Successfully!', status: true });
                                         }
-                                        
+
 
 
 
@@ -91,7 +91,7 @@ function SIGN_UP() {
                 }
 
                 catch (err) {
-                        
+
                         console.error(err.message);
                         return res.status(500).json({ msg: 'Error adding User!', status: false });
 
@@ -104,6 +104,11 @@ function SIGN_UP() {
 
 
 SIGN_UP();
+
+
+
+
+
 
 
 function LOG_IN() {
@@ -167,14 +172,135 @@ function LOG_IN() {
 }
 
 
+
 LOG_IN();
 
 
 
 
+function CHANGE_PASSWORD() {
 
 
 
+
+
+
+        router.put('/change-password-step1', async (req, res, next) => {
+
+                const { email } = req.query;
+
+                const isValidEmail = CHECK_VALID_EMAIL(email);
+
+                if (!isValidEmail) {
+                        return res.status(400).json({ msg: "Please enter a valid email address!",status:false });
+                        // if it isnt a valid email it will automatically exit so no if else things
+                }
+
+                try {
+                        const info = await User.findOne({ email: email });
+
+                        if (!info) {
+                                return res.status(400).json({ msg: "User not found!",status:false })
+                        }
+
+                        // console.log(info)
+                        // ATTACH info to request, then pass control to next middleware/handler
+                        // can be accessed by other middelwares using req.INFO
+                        req.INFO = info;
+                        if(req.body.USER_OTP){ // if req.body.USER_OTP exists, only then pass control to next middleware
+                        return next();
+                        }
+
+                }
+
+                catch (err) {
+                        // IF THERES ANY ERROR DO THIS!:
+                        console.error(err);
+                        return res.status(500).json({ msg: "Server Down. Please try again later.",status:false })
+                }
+
+
+
+
+
+
+
+        });
+
+        router.put('/change-password-step2', async (req, res, next) => {
+
+
+
+                try {
+                        // DEBUGGING: console.log("hi from verify otp",req.INFO); next();
+                        const { email } = req.INFO; //DEBUGGING: console.log(email)
+                        const { USER_OTP } = req.body; // user entered otp
+
+
+
+                        const isOTPSent = await SEND_OTP(email); // console.log(isOTPSent) will give an object with otp and status
+
+                        if (isOTPSent.sent === true) {
+                                const { otp } = isOTPSent;
+                                //console.log(isOTPSent.otp) will show the otp that's sent to user 
+                                const isValid = await COMPARE_OTP(email, USER_OTP);
+                                if (!isValid) {
+                                        return res.status(400).json({ msg: "Invalid or expired OTP! Please reload the page and request a new one.",status:false })
+                                }
+                                //else:
+
+                                return next();
+
+
+                        }
+                        else {
+                                console.log("OTP SENDING FAILED")
+                                return res.status(500).json({ msg: "There was an error sending OTP! Please refresh this page" ,status:false})
+
+                        }
+
+
+
+
+
+                }
+                catch (err) {
+                        console.log(err)
+                        return res.status(500).json({ msg: "Server Down! Please try again later",status:false })
+                }
+
+
+        });
+
+        router.put('/change-password-step3', async (req, res) => {
+                const { email } = req.INFO
+                const { new_password } = req.body;
+                new_password = await bcrypt.hash(new_password, 10); // hash the new_password
+                const info = await User.findOneAndUpdate({ email: email }, { $set: { password: new_password } });
+                
+                if(info){
+                return res.status(200).json({msg:"Your password has been updated successfully! You now may return to the login page.",status:true})
+                }
+                else{
+                        return res.status(500).json({msg:'Server Down, please try again later.',status:false});
+                }
+
+
+
+        });
+
+
+
+
+
+}
+
+
+
+
+
+
+CHANGE_PASSWORD();
 
 
 module.exports = router;
