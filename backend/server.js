@@ -49,7 +49,7 @@ async function ConnectDB() {
 
 }
 
-ConnectDB(); // ideally we should use .then(), as ASYNC function always return promises
+ConnectDB();
 
 
 

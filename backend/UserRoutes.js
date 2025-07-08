@@ -7,9 +7,15 @@ const router = express.Router();
 const User = require('./UserModel');
 const { ValidateLogin_Input, ValidateSignUP_Input, CHECK_VALID_EMAIL } = require('./utilities/InputValidatorBACKEND');
 const bcrypt = require('bcrypt');
+const dotenv=require('dotenv').config({path:'./.env'});
 
-// Welcome Email sender after user logs in and OTP SENDER!
-const { SEND_WELCOME_EMAIL, SEND_OTP, COMPARE_OTP } = require('./utilities/EMAIL_SYSTEM')
+
+
+// JWT:
+const jwt=require('jsonwebtoken');
+
+// Welcome Email sender after user logs in and OTP SENDER/COMPARER/DELETER!
+const { SEND_WELCOME_EMAIL, SEND_OTP, COMPARE_OTP,DELETE_OTP } = require('./utilities/EMAIL_SYSTEM')
 
 // LISTING ALL USERS:
 // router.get('/', async (req,res)=>{ 
@@ -179,116 +185,132 @@ LOG_IN();
 
 
 function CHANGE_PASSWORD() {
+        console.log(process.env.SECRET)
+ 
+
+        router.put('/change-password-step1',async (req,res)=>{
+
+                // STEP 1: SEND OTP
+                // STEP 2: VERIFY OTP THEN UPDATE PASSWORD in same form
+
+                let {email}=req.query;
+                email = email.trim().toLowerCase();
+                console.log(email)
+
+                // Check if email is a valid email!
+
+               const isValid = CHECK_VALID_EMAIL(email);
+               
+               if(!isValid){
+               return res.status(400).json({msg:"Please enter a valid email address!",status:false});
+               }
+
+               // CHECK IF THE USER EVEN EXISTS??
+
+              const isExist= await User.findOne({email:email});
+
+              if(!isExist){
+                return res.status(400).json({msg:"User not found!",status:false});
+              }
 
 
+               // AS THE EMAIL IS VALID AND EXISTS, NOW WE WILL SEND THE OTP!
+               // CONTINUE HERE BY USING SEND_OTP THEN HANDLING REJCTS AND RESOLVES
+               // SEND_OTP(email).then(()=>{do something}).catch(err=>{do something})
+               // or await SEND_OTP(), if theres an error show You have requested too many otps, please try again in 10 minutes
+              
+
+               SEND_OTP(email).then(()=>{ 
+                console.log("OTP SENT SUCCESSFULLY")
+                const $PAYLOAD={email:email};
+                const secret=process.env.SECRET;
+                const $token=jwt.sign($PAYLOAD,secret,{expiresIn:'10m'});
+                console.log($token)
+
+                // WE WILL SEND JWT TO USER, USER WILL SEND IT BACK IN req.body for 2nd STEP, then we will decode it!
+                return res.status(200).json({msg: `We have send an OTP to your email:${email}.Please check your inbox and type it here`,status:true,token:$token});
+                   })
 
 
+                   // try to remove catch
 
-
-        router.put('/change-password-step1', async (req, res, next) => {
-
-                const { email } = req.query;
-
-                const isValidEmail = CHECK_VALID_EMAIL(email);
-
-                if (!isValidEmail) {
-                        return res.status(400).json({ msg: "Please enter a valid email address!",status:false });
-                        // if it isnt a valid email it will automatically exit so no if else things
-                }
-
-                try {
-                        const info = await User.findOne({ email: email });
-
-                        if (!info) {
-                                return res.status(400).json({ msg: "User not found!",status:false })
-                        }
-
-                        // console.log(info)
-                        // ATTACH info to request, then pass control to next middleware/handler
-                        // can be accessed by other middelwares using req.INFO
-                        req.INFO = info;
-                        if(req.body.USER_OTP){ // if req.body.USER_OTP exists, only then pass control to next middleware
-                        return next();
-                        }
-
-                }
-
-                catch (err) {
-                        // IF THERES ANY ERROR DO THIS!:
-                        console.error(err);
-                        return res.status(500).json({ msg: "Server Down. Please try again later.",status:false })
-                }
-
-
-
-
-
-
-
-        });
-
-        router.put('/change-password-step2', async (req, res, next) => {
-
-
-
-                try {
-                        // DEBUGGING: console.log("hi from verify otp",req.INFO); next();
-                        const { email } = req.INFO; //DEBUGGING: console.log(email)
-                        const { USER_OTP } = req.body; // user entered otp
-
-
-
-                        const isOTPSent = await SEND_OTP(email); // console.log(isOTPSent) will give an object with otp and status
-
-                        if (isOTPSent.sent === true) {
-                                const { otp } = isOTPSent;
-                                //console.log(isOTPSent.otp) will show the otp that's sent to user 
-                                const isValid = await COMPARE_OTP(email, USER_OTP);
-                                if (!isValid) {
-                                        return res.status(400).json({ msg: "Invalid or expired OTP! Please reload the page and request a new one.",status:false })
-                                }
-                                //else:
-
-                                return next();
-
-
-                        }
-                        else {
-                                console.log("OTP SENDING FAILED")
-                                return res.status(500).json({ msg: "There was an error sending OTP! Please refresh this page" ,status:false})
-
-                        }
-
-
-
-
-
-                }
-                catch (err) {
-                        console.log(err)
-                        return res.status(500).json({ msg: "Server Down! Please try again later",status:false })
-                }
-
-
-        });
-
-        router.put('/change-password-step3', async (req, res) => {
-                const { email } = req.INFO
-                const { new_password } = req.body;
-                new_password = await bcrypt.hash(new_password, 10); // hash the new_password
-                const info = await User.findOneAndUpdate({ email: email }, { $set: { password: new_password } });
+               .catch((err)=>{ return res.status(400).json({msg:" You have requested too many otps, please try again in 10 minutes", status:false})});
+                 
                 
-                if(info){
-                return res.status(200).json({msg:"Your password has been updated successfully! You now may return to the login page.",status:true})
+               
+        // TILL HERE, THE OTP HAS BEEN SENT SUCCESSFULLY AND SAVED IN THE DB
+        // NOW
+               
+
+        });
+
+        router.put('/change-password-step2',async (req,res)=>{
+
+                const {token,otp,new_password}=req.body;
+                if(!token || !otp || !new_password){
+                        return res.status(400).json({msg:"Please fill in all the fields!",status:false});
+
                 }
-                else{
-                        return res.status(500).json({msg:'Server Down, please try again later.',status:false});
+
+                let decoded=null;
+
+                try{
+                       
+                      decoded= jwt.verify(token,process.env.SECRET);
+                        console.log("JWT VERIFICATION SUCCESSFULL",decoded)
                 }
+                catch(err){
+                        console.error(err)
+                        return res.status(401).json({msg:"Session expired, please request a new OTP!",status:false});
+                }
+
+                // YAY WE GOT THE EMAIL!!!!!
+                // IF DECODED IS NULL, IT ONLY MEANS THAT SIGNATURE WAS INVALID, SO DECODING fAILED AND IT WILL RETURN THE PROGRAM FROM CATCH BLOCK
+                const email=decoded.email;
+
+
+                // AS WE GOT THE EMAIL, NOW LETS COMPARE THE OTP!
+                
+                const isOK= await COMPARE_OTP(email,otp);
+
+                if(!isOK){
+                   return res.status(400).json({msg:"The OTP you entered is not correct or expired!",status:false});
+
+                }
+
+                  // AS OTP IS CORRECT, NOW LETS UPDATE USER PASSWORD!
+                 // WE WILL HASH THE PASSWORD BEFORE SAVING IT
+                 try{
+                const hashedPassword= await bcrypt.hash(new_password,10);
+                const hasUpdated=await User.findOneAndUpdate({email:email},{$set:{password:hashedPassword}});
+
+                if(hasUpdated){
+                        // AS PASSWORD IS UPDATED, NOW DELETE THE OTP!
+                        DELETE_OTP(email);
+                       return res.status(200).json({msg:"Your password has been updated successfully. You now may return to login page",status:true});
+                }
+
+                // THROW AN ERROR IF THE USER PASS STILL NOT UPDATED!
+                throw new Error("Error!")
+
+               
+                }
+                catch(err){
+                        res.status(400).json({msg:"There was an error updating your password. Please try again later!",status:false});
+                }
+
+
+                        
+
+
+
+              
+
+
 
 
 
         });
-
 
 
 
