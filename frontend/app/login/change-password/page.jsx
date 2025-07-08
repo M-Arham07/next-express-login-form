@@ -23,6 +23,7 @@ const FormSchema = z.object({
 })
 
 
+
 import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
 import { useState } from "react"
@@ -38,8 +39,8 @@ export default function CHANGE_PASSWORD() {
 
 
   // INPUT EMAIL FORM!:
-  const INPUT_EMAIL_FORM=  
-   <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+  const INPUT_EMAIL_FORM =
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-sm grid-rows-4 shadow-lg">
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
@@ -80,24 +81,59 @@ export default function CHANGE_PASSWORD() {
 
 
   // USE STATES:
-  const[InputFormShow,setInputFormShow]=useState(true)
+  const [InputFormShow, setInputFormShow] = useState(true)
+  const [Token, setToken] = useState(null)
 
-  
+
 
 
   // For custom error
   const { setError } = form;
 
-  function onSubmit(data) {
-    // by defualt, this form prevents default e.preventDefault();
-    // Example: Simulate backend check for email
-    // We will use JSON repsponse in real life
-    if (data.email === "blocked@example.com") {
-      setError("email", { type: "manual", message: "This email is blocked. Please use another email." });
+  async function onSubmit(info) {
+
+
+    // this form prevents default automatically e.preventDefault()
+    // setError("email", { type: "manual", message: "This email is blocked. Please use another email." });
+    try {
+      const email = info.email;
+      //DEBUGGING: console.log(encodeURIComponent(email))
+
+      const res = await fetch(`http://localhost:4000/api/change-password-step1?email=${encodeURIComponent(email)}`, {
+        method: 'PUT',
+      });
+     
+      const data=await res.json();
+      // console.log(data)
+
+      if(data.status === false){
+         setError("email", { type: "manual", message: data.msg });
+        return;
+      }
+      
+      // as it has passed false check, so do this:
+      // console.log(data)
+      const {token}=data; //ill not use the message sent from backend as we will only show input form if otp has been sent
+
+      setToken(token);
+      // console.log(token)
+      setInputFormShow(false)
+    }
+
+
+
+    catch (err) {
+      console.log("FAILED TO FETCH, SERVER DOWN PLZ TRY AGAIN LATER", err)
+      setError("email", { type: "manual", message: "Server down! Please try again later." });
       return;
     }
-    setInputFormShow(false)
+
+
+
+
+
+
   }
 
- return InputFormShow ? INPUT_EMAIL_FORM : <OTP_FORM />
+  return InputFormShow ? INPUT_EMAIL_FORM : <OTP_FORM token={Token} /> //pass the token as props!
 }
